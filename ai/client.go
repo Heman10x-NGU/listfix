@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	defaultBaseURL = "https://api.mimo.com/v1"
-	modelName      = "mimo-v2.5-pro"
+	defaultBaseURL = "https://api.openai.com/v1"
+	defaultModel   = "gpt-4o-mini"
 	requestTimeout = 30 * time.Second
 )
 
@@ -49,18 +49,23 @@ Guidelines:
 
 Return ONLY valid JSON. No markdown fences, no commentary.`
 
-// OptimizeListing sends a listing to the MiMo API and returns the parsed optimization result.
+// OptimizeListing sends a listing to any OpenAI-compatible API and returns the parsed result.
 func OptimizeListing(ctx context.Context, listing models.Listing) (*models.OptimizationResult, error) {
-	apiKey := os.Getenv("MIMO_API_KEY")
+	apiKey := os.Getenv("OPENAI_API_KEY")
 
 	// Demo mode: return realistic mock data when no API key
 	if apiKey == "" {
 		return demoResult(listing), nil
 	}
 
-	baseURL := os.Getenv("MIMO_BASE_URL")
+	baseURL := os.Getenv("OPENAI_BASE_URL")
 	if baseURL == "" {
 		baseURL = defaultBaseURL
+	}
+
+	model := os.Getenv("OPENAI_MODEL")
+	if model == "" {
+		model = defaultModel
 	}
 
 	cfg := goopenai.DefaultConfig(apiKey)
@@ -77,7 +82,7 @@ func OptimizeListing(ctx context.Context, listing models.Listing) (*models.Optim
 	defer cancel()
 
 	resp, err := client.CreateChatCompletion(ctx, goopenai.ChatCompletionRequest{
-		Model: modelName,
+		Model: model,
 		ResponseFormat: &goopenai.ChatCompletionResponseFormat{
 			Type: goopenai.ChatCompletionResponseFormatTypeJSONObject,
 		},
@@ -93,18 +98,18 @@ func OptimizeListing(ctx context.Context, listing models.Listing) (*models.Optim
 		},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("mimo api call: %w", err)
+		return nil, fmt.Errorf("api call: %w", err)
 	}
 
 	if len(resp.Choices) == 0 {
-		return nil, fmt.Errorf("mimo api returned no choices")
+		return nil, fmt.Errorf("api returned no choices")
 	}
 
 	raw := resp.Choices[0].Message.Content
 
 	var result models.OptimizationResult
 	if err := json.Unmarshal([]byte(raw), &result); err != nil {
-		return nil, fmt.Errorf("parse mimo response: %w (raw: %s)", err, raw)
+		return nil, fmt.Errorf("parse response: %w (raw: %s)", err, raw)
 	}
 
 	return &result, nil

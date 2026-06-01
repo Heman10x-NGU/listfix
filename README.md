@@ -20,8 +20,8 @@ go build -o listfix .
 # Run (demo mode — no API key needed)
 ./listfix
 
-# Run with MiMo AI
-export MIMO_API_KEY=your-key
+# Run with any OpenAI-compatible API
+export OPENAI_API_KEY=your-key
 ./listfix
 ```
 
@@ -31,11 +31,27 @@ Open http://localhost:8080
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `MIMO_API_KEY` | No | — | API key for MiMo AI (bring your own key). If not set, runs in demo mode with realistic mock data. |
-| `MIMO_BASE_URL` | No | `https://api.mimo.com/v1` | MiMo API base URL (OpenAI-compatible) |
-| `PORT` | No | `8080` | HTTP server port |
+| `OPENAI_API_KEY` | No | — | API key for any OpenAI-compatible API. If not set, runs in demo mode with realistic mock data. |
+| `OPENAI_BASE_URL` | No | `https://api.openai.com/v1` | API base URL. Works with OpenAI, Azure, Groq, Together, Ollama, LM Studio, vLLM, LiteLLM, or any OpenAI-compatible endpoint. |
+| `OPENAI_MODEL` | No | `gpt-4o-mini` | Model name to use. |
+| `PORT` | No | `8080` | HTTP server port. |
 
-**Bring Your Own Key (BYOK):** This tool does not include an API key. You bring your own MiMo or OpenAI-compatible API key. This keeps the project free, open source, and avoids any usage limits imposed by a shared key.
+**Bring Your Own Key (BYOK):** This tool does not include an API key. You bring your own key from any OpenAI-compatible provider. This keeps the project free, open source, and avoids shared-key rate limits.
+
+### Supported Providers
+
+Works out of the box with any OpenAI-compatible API:
+
+| Provider | `OPENAI_BASE_URL` |
+|----------|-------------------|
+| OpenAI | `https://api.openai.com/v1` (default) |
+| Groq | `https://api.groq.com/openai/v1` |
+| Together AI | `https://api.together.xyz/v1` |
+| Ollama | `http://localhost:11434/v1` |
+| LM Studio | `http://localhost:1234/v1` |
+| vLLM | `http://localhost:8000/v1` |
+| LiteLLM | `http://localhost:4000/v1` |
+| Azure OpenAI | `https://{resource}.openai.azure.com/openai/deployments/{deploy}/v1` |
 
 ## API
 
@@ -89,14 +105,10 @@ Optimize a marketplace listing.
 ## Tech Stack
 
 - **Backend:** Go (net/http)
-- **AI:** MiMo v2.5 Pro via OpenAI-compatible API
+- **AI:** Any OpenAI-compatible API (OpenAI, Groq, Together, Ollama, etc.)
 - **Frontend:** HTML, Tailwind CSS (CDN), vanilla JavaScript
 - **Deploy:** Docker, GitHub Actions
 
 ## License
 
 MIT
-
----
-
-Built as part of the [Daemons](https://github.com/Heman10x-NGU/daemons) ecosystem.
