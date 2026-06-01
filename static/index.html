@@ -6,6 +6,9 @@
   <title>Listfix — AI-Powered Listing Optimizer</title>
   <meta name="description" content="Paste your Facebook Marketplace listing, get AI-optimized title, description, and pricing to sell faster.">
 
+  <!-- Favicon -->
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+
   <!-- Open Graph / Social -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="Listfix — AI-Powered Listing Optimizer">
@@ -24,14 +27,17 @@
       theme: {
         extend: {
           colors: {
-            surface: '#0a0a0f',
-            'surface-1': '#12121a',
-            'surface-2': '#1a1a26',
-            accent: '#6366f1',
-            'accent-hover': '#818cf8',
+            surface: '#0c0c0e',
+            'surface-1': '#141418',
+            'surface-2': '#1c1c22',
+            'surface-3': '#24242c',
+            accent: '#22d3ee',
+            'accent-muted': '#0e7490',
+            'accent-subtle': 'rgba(34, 211, 238, 0.08)',
           },
           fontFamily: {
-            sans: ['-apple-system', 'BlinkMacSystemFont', 'SF Pro Display', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+            sans: ['SF Pro Display', 'Geist', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['SF Mono', 'JetBrains Mono', 'Fira Code', 'monospace'],
           },
         },
       },
@@ -47,17 +53,17 @@
 <body class="bg-surface text-white font-sans antialiased min-h-screen flex flex-col">
 
   <!-- Header -->
-  <header class="w-full py-6 px-6 md:px-12">
+  <header class="w-full py-5 px-6 md:px-12">
     <div class="max-w-5xl mx-auto flex items-center justify-between">
-      <a href="/" class="flex items-center gap-3 group">
-        <div class="w-9 h-9 rounded-xl bg-accent flex items-center justify-center text-white font-bold text-lg tracking-tight transition-transform duration-200 group-hover:scale-105">
+      <a href="/" class="flex items-center gap-2.5 group">
+        <div class="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-surface font-bold text-sm tracking-tight transition-transform duration-200 group-hover:scale-105">
           L
         </div>
-        <span class="text-xl font-semibold tracking-tight">Listfix</span>
+        <span class="text-lg font-semibold tracking-tight text-white/90">Listfix</span>
       </a>
       <div class="flex items-center gap-3">
-        <span class="text-xs font-medium text-white/40 bg-white/5 border border-white/10 rounded-full px-3 py-1.5">
-          BYOK &bull; Open source
+        <span class="text-[11px] font-mono text-white/30 bg-white/[0.03] border border-white/[0.06] rounded-md px-2.5 py-1">
+          BYOK
         </span>
         <a href="https://github.com/Heman10x-NGU/listfix" target="_blank" rel="noopener noreferrer"
            class="text-white/40 hover:text-white/70 transition-colors">
@@ -68,37 +74,40 @@
   </header>
 
   <!-- Main Content -->
-  <main class="flex-1 flex flex-col items-center justify-start px-6 md:px-12 pt-8 md:pt-16 pb-24">
+  <main class="flex-1 flex flex-col items-center justify-start px-6 md:px-12 pt-8 md:pt-14 pb-24">
 
     <!-- Hero Section -->
-    <section class="max-w-3xl mx-auto text-center mb-16">
-      <h1 class="text-4xl md:text-6xl font-bold tracking-tight leading-[1.1] mb-6 text-balance">
-        Sell faster with
-        <span class="text-gradient">AI-optimized</span>
-        listings
+    <section class="max-w-2xl mx-auto text-center mb-12">
+      <div class="inline-flex items-center gap-2 text-[11px] font-mono text-accent/60 bg-accent/[0.06] border border-accent/10 rounded-full px-3 py-1 mb-6">
+        <span class="w-1.5 h-1.5 rounded-full bg-accent/40"></span>
+        open source
+      </div>
+      <h1 class="text-4xl md:text-5xl font-bold tracking-tight leading-[1.1] mb-5">
+        Sell faster with<br>
+        <span class="text-white/50 font-normal">AI-optimized listings</span>
       </h1>
-      <p class="text-lg md:text-xl text-white/50 max-w-xl mx-auto leading-relaxed">
-        Paste your Facebook Marketplace listing below. Get an optimized title, description, and price suggestion in seconds.
+      <p class="text-base text-white/40 max-w-md mx-auto leading-relaxed">
+        Paste your Facebook Marketplace listing. Get an optimized title, description, and price in seconds.
       </p>
     </section>
 
     <!-- Input Section -->
-    <section class="w-full max-w-2xl mx-auto mb-8">
+    <section class="w-full max-w-xl mx-auto mb-8">
       <div class="relative group">
-        <div class="absolute -inset-px rounded-2xl bg-gradient-to-b from-accent/20 to-transparent opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+        <div class="absolute -inset-px rounded-xl bg-gradient-to-b from-accent/10 to-transparent opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
         <textarea
           id="listing-input"
-          rows="6"
+          rows="5"
           placeholder="Paste your listing here...&#10;&#10;e.g., &quot;Selling my iPhone 14 Pro, used for 6 months, works perfectly, comes with case and charger. Asking $750 OBO.&quot;"
-          class="w-full bg-surface-1 border border-white/10 rounded-2xl px-5 py-4 text-white placeholder-white/25 text-base leading-relaxed resize-none focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all duration-200"
+          class="w-full bg-surface-1 border border-white/[0.06] rounded-xl px-4 py-3.5 text-white/90 placeholder-white/20 text-sm leading-relaxed resize-none focus:outline-none focus:border-accent/30 transition-all duration-200 font-mono"
         ></textarea>
       </div>
 
       <button
         id="analyze-btn"
-        class="mt-4 w-full md:w-auto px-8 py-3.5 bg-accent hover:bg-accent-hover text-white font-medium rounded-xl transition-all duration-200 hover:shadow-lg hover:shadow-accent/20 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-none disabled:active:scale-100 flex items-center justify-center gap-2"
+        class="mt-3 w-full px-6 py-3 bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] hover:border-accent/20 text-white/80 hover:text-white font-medium text-sm rounded-lg transition-all duration-200 active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed disabled:active:scale-100 flex items-center justify-center gap-2"
       >
-        <span id="btn-text">Analyze with AI</span>
+        <span id="btn-text">Analyze listing</span>
         <div id="btn-spinner" class="hidden">
           <div class="spinner"></div>
         </div>
@@ -106,90 +115,108 @@
     </section>
 
     <!-- Results Section (Hidden Initially) -->
-    <section id="results" class="w-full max-w-2xl mx-auto hidden">
-      <div class="glass-card rounded-2xl p-6 md:p-8 space-y-8">
+    <section id="results" class="w-full max-w-xl mx-auto hidden">
+      <div class="space-y-6">
 
-        <!-- Score Gauge -->
-        <div class="flex flex-col items-center">
-          <div class="score-gauge relative w-32 h-32">
+        <!-- Score -->
+        <div class="flex items-center gap-4 p-4 bg-surface-1 border border-white/[0.06] rounded-xl">
+          <div class="score-gauge relative w-16 h-16 flex-shrink-0">
             <svg viewBox="0 0 120 120" class="w-full h-full -rotate-90">
-              <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="8"/>
-              <circle id="score-ring" cx="60" cy="60" r="52" fill="none" stroke="url(#score-gradient)" stroke-width="8" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7" class="score-ring"/>
-              <defs>
-                <linearGradient id="score-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stop-color="#6366f1"/>
-                  <stop offset="100%" stop-color="#a78bfa"/>
-                </linearGradient>
-              </defs>
+              <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="6"/>
+              <circle id="score-ring" cx="60" cy="60" r="52" fill="none" stroke="#22d3ee" stroke-width="6" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7" class="score-ring"/>
             </svg>
             <div class="absolute inset-0 flex flex-col items-center justify-center">
-              <span id="score-value" class="text-3xl font-bold">0</span>
-              <span class="text-xs text-white/40 mt-0.5">Score</span>
+              <span id="score-value" class="text-xl font-bold font-mono">0</span>
             </div>
+          </div>
+          <div>
+            <div class="text-sm font-medium text-white/60">Listing Score</div>
+            <div class="text-xs text-white/30 mt-0.5">Based on title, description, pricing, and photos</div>
           </div>
         </div>
 
         <!-- Suggestions -->
-        <div id="suggestions" class="space-y-4">
+        <div id="suggestions" class="space-y-3">
           <!-- Populated by JS -->
         </div>
 
         <!-- Optimized Listing -->
         <div class="space-y-4">
-          <h3 class="text-sm font-medium text-white/40 uppercase tracking-wider">Optimized Listing</h3>
+          <div class="text-[11px] font-mono text-white/30 uppercase tracking-widest">Optimized output</div>
 
           <!-- Title -->
-          <div class="space-y-2">
+          <div class="space-y-1.5">
             <div class="flex items-center justify-between">
-              <label class="text-sm font-medium text-white/60">Title</label>
-              <button class="copy-btn text-xs text-white/40 hover:text-white/80 flex items-center gap-1.5 transition-colors" data-target="opt-title">
-                <svg class="copy-icon w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke-width="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke-width="2"/></svg>
-                <svg class="check-icon w-3.5 h-3.5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+              <label class="text-xs font-medium text-white/40">Title</label>
+              <button class="copy-btn text-[11px] text-white/30 hover:text-white/60 flex items-center gap-1 transition-colors" data-target="opt-title">
+                <svg class="copy-icon w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke-width="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke-width="2"/></svg>
+                <svg class="check-icon w-3 h-3 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                 <span class="copy-label">Copy</span>
               </button>
             </div>
-            <p id="opt-title" class="text-lg font-medium leading-snug bg-surface-2 border border-white/5 rounded-xl px-4 py-3"></p>
+            <p id="opt-title" class="text-sm font-medium leading-snug bg-surface-1 border border-white/[0.06] rounded-lg px-3.5 py-2.5 font-mono"></p>
           </div>
 
           <!-- Description -->
-          <div class="space-y-2">
+          <div class="space-y-1.5">
             <div class="flex items-center justify-between">
-              <label class="text-sm font-medium text-white/60">Description</label>
-              <button class="copy-btn text-xs text-white/40 hover:text-white/80 flex items-center gap-1.5 transition-colors" data-target="opt-desc">
-                <svg class="copy-icon w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke-width="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke-width="2"/></svg>
-                <svg class="check-icon w-3.5 h-3.5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+              <label class="text-xs font-medium text-white/40">Description</label>
+              <button class="copy-btn text-[11px] text-white/30 hover:text-white/60 flex items-center gap-1 transition-colors" data-target="opt-desc">
+                <svg class="copy-icon w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke-width="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke-width="2"/></svg>
+                <svg class="check-icon w-3 h-3 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                 <span class="copy-label">Copy</span>
               </button>
             </div>
-            <p id="opt-desc" class="text-sm leading-relaxed text-white/70 bg-surface-2 border border-white/5 rounded-xl px-4 py-3 whitespace-pre-wrap"></p>
+            <p id="opt-desc" class="text-xs leading-relaxed text-white/50 bg-surface-1 border border-white/[0.06] rounded-lg px-3.5 py-2.5 whitespace-pre-wrap"></p>
           </div>
 
           <!-- Price -->
-          <div class="space-y-2">
+          <div class="space-y-1.5">
             <div class="flex items-center justify-between">
-              <label class="text-sm font-medium text-white/60">Suggested Price</label>
-              <button class="copy-btn text-xs text-white/40 hover:text-white/80 flex items-center gap-1.5 transition-colors" data-target="opt-price">
-                <svg class="copy-icon w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke-width="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke-width="2"/></svg>
-                <svg class="check-icon w-3.5 h-3.5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+              <label class="text-xs font-medium text-white/40">Suggested Price</label>
+              <button class="copy-btn text-[11px] text-white/30 hover:text-white/60 flex items-center gap-1 transition-colors" data-target="opt-price">
+                <svg class="copy-icon w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke-width="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke-width="2"/></svg>
+                <svg class="check-icon w-3 h-3 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                 <span class="copy-label">Copy</span>
               </button>
             </div>
-            <p id="opt-price" class="text-2xl font-bold text-accent-hover"></p>
+            <p id="opt-price" class="text-2xl font-bold text-accent font-mono"></p>
           </div>
         </div>
 
       </div>
     </section>
 
+    <!-- How it works -->
+    <section class="w-full max-w-xl mx-auto mt-20">
+      <div class="text-[11px] font-mono text-white/20 uppercase tracking-widest mb-6">How it works</div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="p-4 bg-surface-1 border border-white/[0.04] rounded-xl">
+          <div class="text-[11px] font-mono text-accent/40 mb-2">01</div>
+          <div class="text-sm font-medium text-white/70 mb-1">Paste listing</div>
+          <div class="text-xs text-white/30">Copy your Marketplace title and description</div>
+        </div>
+        <div class="p-4 bg-surface-1 border border-white/[0.04] rounded-xl">
+          <div class="text-[11px] font-mono text-accent/40 mb-2">02</div>
+          <div class="text-sm font-medium text-white/70 mb-1">AI analyzes</div>
+          <div class="text-xs text-white/30">Checks title, price, photos, keywords</div>
+        </div>
+        <div class="p-4 bg-surface-1 border border-white/[0.04] rounded-xl">
+          <div class="text-[11px] font-mono text-accent/40 mb-2">03</div>
+          <div class="text-sm font-medium text-white/70 mb-1">Copy optimized</div>
+          <div class="text-xs text-white/30">One-click copy the improved listing back</div>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <!-- Footer -->
-  <footer class="w-full py-8 px-6 md:px-12 border-t border-white/5">
-    <div class="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-white/30">
+  <footer class="w-full py-6 px-6 md:px-12 border-t border-white/[0.04]">
+    <div class="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-white/20">
       <span>Built with Go + OpenAI-compatible API</span>
       <div class="flex items-center gap-4">
-        <a href="https://github.com/Heman10x-NGU/listfix" target="_blank" rel="noopener noreferrer" class="hover:text-white/60 transition-colors flex items-center gap-1.5">
-          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+        <a href="https://github.com/Heman10x-NGU/listfix" target="_blank" rel="noopener noreferrer" class="hover:text-white/50 transition-colors">
           GitHub
         </a>
         <span class="text-white/10">|</span>

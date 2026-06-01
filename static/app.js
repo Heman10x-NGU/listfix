@@ -139,9 +139,9 @@ document.addEventListener('DOMContentLoaded', () => {
     ring.style.transition = 'stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1)';
     ring.style.strokeDashoffset = offset;
 
-    if (score >= 70) ring.style.stroke = '#22c55e';
-    else if (score >= 40) ring.style.stroke = '#eab308';
-    else ring.style.stroke = '#ef4444';
+    if (score >= 70) ring.style.stroke = '#34d399';
+    else if (score >= 40) ring.style.stroke = '#fbbf24';
+    else ring.style.stroke = '#f87171';
 
     let current = 0;
     const step = score / 40;
@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
       kw.className = 'mt-2 flex flex-wrap gap-1.5';
       title.keywords_added.forEach(function(k) {
         const tag = document.createElement('span');
-        tag.className = 'text-xs bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-full';
+        tag.className = 'text-xs bg-cyan-500/10 text-cyan-300 px-2 py-0.5 rounded-full font-mono';
         tag.textContent = '+' + k;
         kw.appendChild(tag);
       });
@@ -198,7 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
     improvements.forEach(function(imp) {
       const row = document.createElement('div');
       row.className = 'flex items-start gap-2 text-sm text-white/60 mb-1';
-      row.innerHTML = '<span class="text-indigo-400 mt-0.5">✦</span> ' + imp;
+      row.innerHTML = '<span class="text-cyan-400/60 mt-0.5">✦</span> ' + imp;
       container.appendChild(row);
     });
   }
@@ -206,7 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderPhotos(photos, container) {
     const tip = document.createElement('div');
     tip.className = 'flex items-start gap-2 text-sm text-white/60 mt-4 p-3 bg-white/5 rounded-xl border border-white/5';
-    tip.innerHTML = '<span class="text-indigo-400 mt-0.5">📸</span>' +
+    tip.innerHTML = '<span class="text-cyan-400/60 mt-0.5 font-mono text-xs">IMG</span>' +
       '<div><div class="font-medium text-white/80">Move photo #' + photos.suggested_lead + ' to lead position</div>' +
       '<div class="text-white/40 mt-1">' + photos.reason + '</div></div>';
     container.appendChild(tip);
@@ -220,7 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
     tags.className = 'flex flex-wrap gap-2';
     keywords.forEach(function(kw) {
       const tag = document.createElement('span');
-      tag.className = 'text-xs bg-white/5 text-white/60 border border-white/10 px-2.5 py-1 rounded-full';
+      tag.className = 'text-xs bg-white/[0.03] text-white/40 border border-white/[0.06] px-2 py-0.5 rounded font-mono';
       tag.textContent = kw;
       tags.appendChild(tag);
     });
@@ -235,7 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
     tips.forEach(function(tip, i) {
       const row = document.createElement('div');
       row.className = 'flex items-start gap-2 text-sm text-white/60 mb-2';
-      row.innerHTML = '<span class="text-indigo-400 font-mono text-xs mt-0.5">' + (i + 1) + '.</span> ' + tip;
+      row.innerHTML = '<span class="text-cyan-400/60 font-mono text-xs mt-0.5">' + (i + 1) + '.</span> ' + tip;
       section.appendChild(row);
     });
     container.appendChild(section);
