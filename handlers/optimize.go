@@ -2,10 +2,14 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
+
+	"listfix/ai"
+	"listfix/models"
 )
 
 const (
@@ -16,12 +20,6 @@ const (
 
 type OptimizeRequest struct {
 	ListingText string `json:"listing_text"`
-}
-
-type OptimizeResponse struct {
-	Score       int      `json:"score"`
-	Suggestions []string `json:"suggestions"`
-	Improved    string   `json:"improved_text"`
 }
 
 type OptimizeHandler struct {
@@ -60,9 +58,15 @@ func (h *OptimizeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := optimizeListing(req.ListingText)
+	listing := models.Listing{
+		Title:       req.ListingText,
+		Description: req.ListingText,
+	}
+
+	result, err := ai.OptimizeListing(r.Context(), listing)
 	if err != nil {
-		http.Error(w, `{"error":"optimization failed"}`, http.StatusInternalServerError)
+		log.Printf("Optimize error: %v", err)
+		http.Error(w, `{"error":"optimization failed: `+err.Error()+`"}`, http.StatusInternalServerError)
 		return
 	}
 
@@ -77,7 +81,6 @@ func (h *OptimizeHandler) allowRequest(ip string) bool {
 	now := time.Now()
 	cutoff := now.Add(-rateLimitWindow)
 
-	// Clean old entries
 	var valid []time.Time
 	for _, t := range h.requests[ip] {
 		if t.After(cutoff) {
@@ -92,18 +95,4 @@ func (h *OptimizeHandler) allowRequest(ip string) bool {
 
 	h.requests[ip] = append(h.requests[ip], now)
 	return true
-}
-
-func optimizeListing(text string) (*OptimizeResponse, error) {
-	// TODO: Integrate with MiMo AI client for actual optimization
-	// For now, return a placeholder response
-	return &OptimizeResponse{
-		Score: 75,
-		Suggestions: []string{
-			"Add more specific keywords for better search visibility",
-			"Include dimensions or specifications",
-			"Highlight unique selling points in the first line",
-		},
-		Improved: text,
-	}, nil
 }

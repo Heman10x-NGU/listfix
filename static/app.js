@@ -1,509 +1,279 @@
-// Listfix Frontend Application
-// Vanilla JavaScript for Facebook Marketplace listing optimization
-//
-// Expected DOM structure:
-//   #listing-input      — textarea for listing text
-//   #analyze-btn        — button to trigger analysis
-//   #loading            — loading container (hidden by default)
-//   #results            — results container (hidden by default)
-//   #error-message      — error display container (hidden by default)
-//   #score-gauge        — SVG circle for score visualization
-//   #score-value        — text element showing numeric score
-//   #original-title     — element for current title (strikethrough)
-//   #optimized-title    — element for optimized title
-//   #original-desc      — element for current description
-//   #optimized-desc     — element for optimized description
-//   #current-price      — element for current price
-//   #suggested-price    — element for suggested price
-//   #price-analysis     — element for pricing analysis text
-//   #photo-tip          — element for photo reorder suggestion
-//   #keywords-list      — container for keyword tags
-//   #tips-list          — container for tip items
-//   #copy-title-btn     — button to copy optimized title
-//   #copy-desc-btn      — button to copy optimized description
-//   #copy-all-btn       — button to copy all results
+// Listfix — Frontend Logic
+// Handles API calls, result rendering, and copy-to-clipboard
 
-(function () {
-  "use strict";
+document.addEventListener('DOMContentLoaded', () => {
+  const input = document.getElementById('listing-input');
+  const btn = document.getElementById('analyze-btn');
+  const btnText = document.getElementById('btn-text');
+  const btnSpinner = document.getElementById('btn-spinner');
+  const results = document.getElementById('results');
 
-  // --- Constants ---
+  // Analyze button click
+  btn.addEventListener('click', async () => {
+    const text = input.value.trim();
+    if (!text) {
+      showError('Please paste your listing title, description, and price.');
+      return;
+    }
 
-  const API_ENDPOINT = "/api/optimize";
-  const MAX_LENGTH = 5000;
-  const COPY_FEEDBACK_DURATION = 2000; // ms
-  const SCORE_GAUGE_RADIUS = 54;
-  const SCORE_GAUGE_CIRCUMFERENCE = 2 * Math.PI * SCORE_GAUGE_RADIUS;
-  const ANIMATION_DURATION = 800; // ms
+    setLoading(true);
+    hideError();
 
-  // --- DOM References (cached once on init) ---
-
-  let elements = {};
-
-  // --- Utility Functions ---
-
-  /**
-   * Safely query a DOM element by ID. Returns null if not found.
-   */
-  function $(id) {
-    return document.getElementById(id);
-  }
-
-  /**
-   * Set the text content of an element, handling null/undefined gracefully.
-   */
-  function setText(el, text) {
-    if (!el) return;
-    el.textContent = text || "";
-  }
-
-  /**
-   * Show or hide an element by toggling a CSS class.
-   */
-  function setVisible(el, visible) {
-    if (!el) return;
-    el.classList.toggle("hidden", !visible);
-  }
-
-  /**
-   * Format a number as USD currency.
-   */
-  function formatPrice(value) {
-    if (typeof value !== "number" || isNaN(value)) return "N/A";
-    return "$" + value.toFixed(2);
-  }
-
-  /**
-   * Copy text to clipboard. Falls back to execCommand for older browsers.
-   * Returns a promise that resolves to true on success, false on failure.
-   */
-  async function copyToClipboard(text) {
     try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(text);
-        return true;
+      const resp = await fetch('/api/optimize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ listing_text: text }),
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(err.error || 'Server error (' + resp.status + ')');
       }
-      // Fallback for insecure contexts
-      var textarea = document.createElement("textarea");
-      textarea.value = text;
-      textarea.style.position = "fixed";
-      textarea.style.left = "-9999px";
-      document.body.appendChild(textarea);
-      textarea.select();
-      var ok = document.execCommand("copy");
-      document.body.removeChild(textarea);
-      return ok;
-    } catch (_) {
-      return false;
+
+      const data = await resp.json();
+      renderResults(data);
+    } catch (err) {
+      showError(err.message || 'Could not connect to server.');
+    } finally {
+      setLoading(false);
     }
-  }
+  });
 
-  /**
-   * Show a temporary checkmark on a button for COPY_FEEDBACK_DURATION ms.
-   */
-  function showCopyFeedback(btn) {
-    if (!btn) return;
-    var original = btn.textContent;
-    btn.textContent = "✓ Copied";
-    btn.classList.add("copied");
-    setTimeout(function () {
-      btn.textContent = original;
-      btn.classList.remove("copied");
-    }, COPY_FEEDBACK_DURATION);
-  }
-
-  /**
-   * Extract an error message from a fetch Response, or return a default.
-   */
-  async function extractErrorMessage(response) {
-    try {
-      var body = await response.json();
-      return body.error || "Unknown error (HTTP " + response.status + ")";
-    } catch (_) {
-      return "Server returned HTTP " + response.status;
+  // Ctrl+Enter to submit
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      btn.click();
     }
+  });
+
+  function setLoading(loading) {
+    btn.disabled = loading;
+    btnText.textContent = loading ? 'Analyzing...' : 'Analyze with AI';
+    btnSpinner.classList.toggle('hidden', !loading);
   }
 
-  // --- Score Gauge Animation ---
-
-  /**
-   * Animate the SVG score gauge from 0 to the target score.
-   * Expects an SVG circle element with id "score-gauge" and a text
-   * element with id "score-value".
-   */
-  function animateScoreGauge(score) {
-    var gauge = elements.scoreGauge;
-    var valueEl = elements.scoreValue;
-    if (!gauge || !valueEl) return;
-
-    // Reset to 0
-    gauge.style.strokeDasharray = SCORE_GAUGE_CIRCUMFERENCE;
-    gauge.style.strokeDashoffset = SCORE_GAUGE_CIRCUMFERENCE;
-    gauge.style.transition = "none";
-
-    // Force reflow so the reset takes effect before animating
-    gauge.getBoundingClientRect();
-
-    // Animate
-    var targetOffset =
-      SCORE_GAUGE_CIRCUMFERENCE * (1 - Math.min(score, 100) / 100);
-    gauge.style.transition =
-      "stroke-dashoffset " + ANIMATION_DURATION + "ms ease-out";
-    gauge.style.strokeDashoffset = targetOffset;
-
-    // Animate the numeric counter
-    var start = 0;
-    var startTime = null;
-
-    function step(timestamp) {
-      if (!startTime) startTime = timestamp;
-      var progress = Math.min((timestamp - startTime) / ANIMATION_DURATION, 1);
-      // Ease-out curve
-      var eased = 1 - Math.pow(1 - progress, 3);
-      var current = Math.round(eased * score);
-      valueEl.textContent = current;
-      if (progress < 1) {
-        requestAnimationFrame(step);
-      }
+  function showError(msg) {
+    let el = document.getElementById('error-msg');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'error-msg';
+      el.className = 'mt-3 text-sm text-red-400 bg-red-400/10 border border-red-400/20 rounded-xl px-4 py-3';
+      btn.parentNode.insertBefore(el, btn.nextSibling);
     }
-
-    requestAnimationFrame(step);
+    el.textContent = msg;
+    el.classList.remove('hidden');
   }
 
-  // --- Rendering ---
-
-  /**
-   * Build a keyword tag element.
-   */
-  function createKeywordTag(keyword) {
-    var tag = document.createElement("span");
-    tag.className = "keyword-tag";
-    tag.textContent = keyword;
-    return tag;
+  function hideError() {
+    const el = document.getElementById('error-msg');
+    if (el) el.classList.add('hidden');
   }
 
-  /**
-   * Build a numbered tip list item.
-   */
-  function createTipItem(tip, index) {
-    var li = document.createElement("li");
-    li.className = "tip-item";
-    li.textContent = tip;
-    return li;
-  }
-
-  /**
-   * Render the full optimization result into the DOM.
-   */
   function renderResults(data) {
+    results.classList.remove('hidden');
+    results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
     // Score gauge
-    animateScoreGauge(data.score || 0);
+    animateScore(data.score || 0);
 
-    // Title section
-    if (data.title) {
-      setText(elements.originalTitle, data.title.current);
-      setText(elements.optimizedTitle, data.title.optimized);
-    }
+    // Suggestions container
+    const sug = document.getElementById('suggestions');
+    sug.innerHTML = '';
 
-    // Description section
-    if (data.description) {
-      setText(elements.originalDesc, data.description.current);
-      setText(elements.optimizedDesc, data.description.optimized);
-    }
+    // Title
+    if (data.title) renderTitle(data.title);
 
-    // Pricing section
-    if (data.pricing) {
-      setText(elements.currentPrice, formatPrice(data.pricing.current));
-      setText(elements.suggestedPrice, formatPrice(data.pricing.suggested));
-      setText(elements.priceAnalysis, data.pricing.analysis);
+    // Description improvements
+    if (data.description && data.description.improvements) {
+      renderImprovements(data.description.improvements, sug);
     }
 
     // Photo tip
-    if (data.photos && data.photos.suggested_lead !== undefined) {
-      var tip =
-        "Move photo #" +
-        data.photos.suggested_lead +
-        " to lead position";
-      if (data.photos.reason) {
-        tip += " — " + data.photos.reason;
-      }
-      setText(elements.photoTip, tip);
-    }
+    if (data.photos) renderPhotos(data.photos, sug);
 
     // Keywords
-    if (elements.keywordsList) {
-      elements.keywordsList.innerHTML = "";
-      if (data.keywords && data.keywords.length > 0) {
-        data.keywords.forEach(function (kw) {
-          elements.keywordsList.appendChild(createKeywordTag(kw));
-        });
-      }
-    }
+    if (data.keywords) renderKeywords(data.keywords, sug);
 
     // Tips
-    if (elements.tipsList) {
-      elements.tipsList.innerHTML = "";
-      if (data.tips && data.tips.length > 0) {
-        data.tips.forEach(function (tip, i) {
-          elements.tipsList.appendChild(createTipItem(tip, i));
-        });
+    if (data.tips) renderTips(data.tips, sug);
+
+    // Optimized fields
+    if (data.title) {
+      document.getElementById('opt-title').textContent = data.title.optimized || 'N/A';
+    }
+    if (data.description) {
+      document.getElementById('opt-desc').textContent = data.description.optimized || 'N/A';
+    }
+    if (data.pricing) {
+      const current = data.pricing.current ? '$' + Math.round(data.pricing.current) : '';
+      const suggested = data.pricing.suggested ? '$' + Math.round(data.pricing.suggested) : 'N/A';
+      document.getElementById('opt-price').innerHTML =
+        '<span class="text-white/30 line-through text-lg mr-2">' + current + '</span>' + suggested;
+
+      // Analysis below price
+      if (data.pricing.analysis) {
+        const analysis = document.createElement('div');
+        analysis.className = 'mt-2 text-sm text-white/50';
+        analysis.textContent = data.pricing.analysis;
+        document.getElementById('opt-price').parentNode.appendChild(analysis);
+      }
+      if (data.pricing.comparable_range) {
+        const range = document.createElement('div');
+        range.className = 'mt-1 text-xs text-white/30';
+        range.textContent = 'Comparable range: ' + data.pricing.comparable_range;
+        document.getElementById('opt-price').parentNode.appendChild(range);
       }
     }
 
-    // Show results, hide loading
-    setVisible(elements.loading, false);
-    setVisible(elements.results, true);
-
-    // Smooth scroll to results
-    if (elements.results) {
-      elements.results.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+    // Copy buttons
+    setupCopyButtons(data);
   }
 
-  /**
-   * Handle the case where the API returns a simplified response
-   * (score + suggestions + improved_text) instead of the full model.
-   */
-  function renderSimplifiedResults(data) {
-    animateScoreGauge(data.score || 0);
+  function animateScore(score) {
+    const ring = document.getElementById('score-ring');
+    const value = document.getElementById('score-value');
+    const circumference = 326.7;
+    const offset = circumference - (score / 100) * circumference;
 
-    // Show the improved text as the optimized description
-    if (data.improved_text) {
-      setText(elements.optimizedDesc, data.improved_text);
-    }
+    ring.style.transition = 'stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1)';
+    ring.style.strokeDashoffset = offset;
 
-    // Show suggestions as tips
-    if (elements.tipsList) {
-      elements.tipsList.innerHTML = "";
-      if (data.suggestions && data.suggestions.length > 0) {
-        data.suggestions.forEach(function (tip, i) {
-          elements.tipsList.appendChild(createTipItem(tip, i));
-        });
-      }
-    }
+    if (score >= 70) ring.style.stroke = '#34d399';
+    else if (score >= 40) ring.style.stroke = '#fbbf24';
+    else ring.style.stroke = '#f87171';
 
-    setVisible(elements.loading, false);
-    setVisible(elements.results, true);
-
-    if (elements.results) {
-      elements.results.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+    let current = 0;
+    const step = score / 40;
+    const interval = setInterval(() => {
+      current += step;
+      if (current >= score) { current = score; clearInterval(interval); }
+      value.textContent = Math.round(current);
+    }, 30);
   }
 
-  // --- Core Logic ---
+  function renderTitle(title) {
+    const el = document.getElementById('opt-title');
+    el.innerHTML = '';
 
-  /**
-   * Display an error message to the user.
-   */
-  function showError(message) {
-    setText(elements.errorMessage, message);
-    setVisible(elements.errorMessage, true);
-    setVisible(elements.loading, false);
-    setVisible(elements.results, false);
-  }
-
-  /**
-   * Validate the textarea input. Returns true if valid.
-   */
-  function validateInput(text) {
-    if (!text || text.trim().length === 0) {
-      showError("Please enter a listing to analyze.");
-      return false;
+    if (title.current) {
+      const orig = document.createElement('span');
+      orig.className = 'line-through text-white/30 mr-2';
+      orig.textContent = title.current;
+      el.appendChild(orig);
+      el.appendChild(document.createElement('br'));
     }
 
-    if (text.length > MAX_LENGTH) {
-      var proceed = confirm(
-        "Your listing is " +
-          text.length +
-          " characters (over " +
-          MAX_LENGTH +
-          "). The server may reject it. Continue anyway?"
-      );
-      return proceed;
-    }
+    const opt = document.createElement('span');
+    opt.className = 'text-white font-medium';
+    opt.textContent = title.optimized || 'N/A';
+    el.appendChild(opt);
 
-    return true;
-  }
-
-  /**
-   * Detect whether the response has the full OptimizationResult shape
-   * or the simplified placeholder shape.
-   */
-  function isFullResult(data) {
-    return !!(data.title || data.description || data.pricing || data.photos);
-  }
-
-  /**
-   * Main analysis flow: validate, fetch, render.
-   */
-  async function analyze() {
-    var text = elements.listingInput ? elements.listingInput.value : "";
-
-    // Hide previous results and errors
-    setVisible(elements.results, false);
-    setVisible(elements.errorMessage, false);
-
-    if (!validateInput(text)) return;
-
-    // Show loading state
-    setVisible(elements.loading, true);
-
-    try {
-      var response = await fetch(API_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ listing_text: text.trim() }),
+    if (title.keywords_added && title.keywords_added.length > 0) {
+      const kw = document.createElement('div');
+      kw.className = 'mt-2 flex flex-wrap gap-1.5';
+      title.keywords_added.forEach(function(k) {
+        const tag = document.createElement('span');
+        tag.className = 'text-xs bg-cyan-500/10 text-cyan-300 px-2 py-0.5 rounded-full font-mono';
+        tag.textContent = '+' + k;
+        kw.appendChild(tag);
       });
+      el.appendChild(kw);
+    }
 
-      if (!response.ok) {
-        var errMsg = await extractErrorMessage(response);
-        showError(errMsg);
-        return;
-      }
-
-      var data = await response.json();
-
-      if (!data || Object.keys(data).length === 0) {
-        showError("No results returned from the server.");
-        return;
-      }
-
-      // Render based on response shape
-      if (isFullResult(data)) {
-        renderResults(data);
-      } else {
-        renderSimplifiedResults(data);
-      }
-    } catch (err) {
-      // Network error or JSON parse error
-      showError(
-        "Could not connect to server. Please check your connection and try again."
-      );
+    if (title.score !== undefined) {
+      const s = document.createElement('div');
+      s.className = 'mt-2 text-xs text-white/40';
+      s.textContent = 'Title score: ' + title.score + '/100';
+      el.appendChild(s);
     }
   }
 
-  // --- Copy Handlers ---
+  function renderImprovements(improvements, container) {
+    const h = document.createElement('h3');
+    h.className = 'text-sm font-medium text-white/40 uppercase tracking-wider mb-3';
+    h.textContent = 'Improvements Made';
+    container.appendChild(h);
 
-  /**
-   * Copy the optimized title to clipboard.
-   */
-  async function copyTitle() {
-    var text = elements.optimizedTitle ? elements.optimizedTitle.textContent : "";
-    if (!text) return;
-    var ok = await copyToClipboard(text);
-    if (ok) showCopyFeedback(elements.copyTitleBtn);
+    improvements.forEach(function(imp) {
+      const row = document.createElement('div');
+      row.className = 'flex items-start gap-2 text-sm text-white/60 mb-1';
+      row.innerHTML = '<span class="text-cyan-400/60 mt-0.5">✦</span> ' + imp;
+      container.appendChild(row);
+    });
   }
 
-  /**
-   * Copy the optimized description to clipboard.
-   */
-  async function copyDescription() {
-    var text = elements.optimizedDesc ? elements.optimizedDesc.textContent : "";
-    if (!text) return;
-    var ok = await copyToClipboard(text);
-    if (ok) showCopyFeedback(elements.copyDescBtn);
+  function renderPhotos(photos, container) {
+    const tip = document.createElement('div');
+    tip.className = 'flex items-start gap-2 text-sm text-white/60 mt-4 p-3 bg-white/5 rounded-xl border border-white/5';
+    tip.innerHTML = '<span class="text-cyan-400/60 mt-0.5 font-mono text-xs">IMG</span>' +
+      '<div><div class="font-medium text-white/80">Move photo #' + photos.suggested_lead + ' to lead position</div>' +
+      '<div class="text-white/40 mt-1">' + photos.reason + '</div></div>';
+    container.appendChild(tip);
   }
 
-  /**
-   * Copy all results (title, description, pricing, tips) to clipboard.
-   */
-  async function copyAll() {
-    var parts = [];
-
-    var title = elements.optimizedTitle
-      ? elements.optimizedTitle.textContent
-      : "";
-    if (title) parts.push("Title: " + title);
-
-    var desc = elements.optimizedDesc
-      ? elements.optimizedDesc.textContent
-      : "";
-    if (desc) parts.push("Description: " + desc);
-
-    var suggested = elements.suggestedPrice
-      ? elements.suggestedPrice.textContent
-      : "";
-    if (suggested && suggested !== "N/A")
-      parts.push("Suggested Price: " + suggested);
-
-    var keywords = [];
-    if (elements.keywordsList) {
-      var tags = elements.keywordsList.querySelectorAll(".keyword-tag");
-      tags.forEach(function (t) {
-        keywords.push(t.textContent);
-      });
-    }
-    if (keywords.length > 0)
-      parts.push("Keywords: " + keywords.join(", "));
-
-    if (parts.length === 0) return;
-
-    var text = parts.join("\n\n");
-    var ok = await copyToClipboard(text);
-    if (ok) showCopyFeedback(elements.copyAllBtn);
+  function renderKeywords(keywords, container) {
+    const section = document.createElement('div');
+    section.className = 'mt-4';
+    section.innerHTML = '<div class="text-sm font-medium text-white/40 uppercase tracking-wider mb-2">Top Search Keywords</div>';
+    const tags = document.createElement('div');
+    tags.className = 'flex flex-wrap gap-2';
+    keywords.forEach(function(kw) {
+      const tag = document.createElement('span');
+      tag.className = 'text-xs bg-white/[0.03] text-white/40 border border-white/[0.06] px-2 py-0.5 rounded font-mono';
+      tag.textContent = kw;
+      tags.appendChild(tag);
+    });
+    section.appendChild(tags);
+    container.appendChild(section);
   }
 
-  // --- Initialization ---
+  function renderTips(tips, container) {
+    const section = document.createElement('div');
+    section.className = 'mt-4';
+    section.innerHTML = '<div class="text-sm font-medium text-white/40 uppercase tracking-wider mb-2">Quick Wins</div>';
+    tips.forEach(function(tip, i) {
+      const row = document.createElement('div');
+      row.className = 'flex items-start gap-2 text-sm text-white/60 mb-2';
+      row.innerHTML = '<span class="text-cyan-400/60 font-mono text-xs mt-0.5">' + (i + 1) + '.</span> ' + tip;
+      section.appendChild(row);
+    });
+    container.appendChild(section);
+  }
 
-  /**
-   * Cache all DOM element references and bind event listeners.
-   */
-  function init() {
-    // Cache DOM references
-    elements = {
-      listingInput: $("listing-input"),
-      analyzeBtn: $("analyze-btn"),
-      loading: $("loading"),
-      results: $("results"),
-      errorMessage: $("error-message"),
-      scoreGauge: $("score-gauge"),
-      scoreValue: $("score-value"),
-      originalTitle: $("original-title"),
-      optimizedTitle: $("optimized-title"),
-      originalDesc: $("original-desc"),
-      optimizedDesc: $("optimized-desc"),
-      currentPrice: $("current-price"),
-      suggestedPrice: $("suggested-price"),
-      priceAnalysis: $("price-analysis"),
-      photoTip: $("photo-tip"),
-      keywordsList: $("keywords-list"),
-      tipsList: $("tips-list"),
-      copyTitleBtn: $("copy-title-btn"),
-      copyDescBtn: $("copy-desc-btn"),
-      copyAllBtn: $("copy-all-btn"),
-    };
+  function setupCopyButtons(data) {
+    document.querySelectorAll('.copy-btn').forEach(function(btn) {
+      btn.onclick = async function() {
+        var target = btn.dataset.target;
+        var text = '';
+        if (target === 'opt-title' && data.title) text = data.title.optimized || '';
+        else if (target === 'opt-desc' && data.description) text = data.description.optimized || '';
+        else if (target === 'opt-price' && data.pricing) text = '$' + Math.round(data.pricing.suggested);
+        if (!text) return;
 
-    // Bind event listeners
-    if (elements.analyzeBtn) {
-      elements.analyzeBtn.addEventListener("click", analyze);
-    }
-
-    if (elements.listingInput) {
-      // Allow Ctrl+Enter / Cmd+Enter to trigger analysis
-      elements.listingInput.addEventListener("keydown", function (e) {
-        if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-          e.preventDefault();
-          analyze();
+        try {
+          await navigator.clipboard.writeText(text);
+        } catch (e) {
+          var ta = document.createElement('textarea');
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
         }
-      });
-    }
 
-    if (elements.copyTitleBtn) {
-      elements.copyTitleBtn.addEventListener("click", copyTitle);
-    }
-
-    if (elements.copyDescBtn) {
-      elements.copyDescBtn.addEventListener("click", copyDescription);
-    }
-
-    if (elements.copyAllBtn) {
-      elements.copyAllBtn.addEventListener("click", copyAll);
-    }
+        var icon = btn.querySelector('.copy-icon');
+        var check = btn.querySelector('.check-icon');
+        var label = btn.querySelector('.copy-label');
+        icon.classList.add('hidden');
+        check.classList.remove('hidden');
+        label.textContent = 'Copied!';
+        setTimeout(function() {
+          icon.classList.remove('hidden');
+          check.classList.add('hidden');
+          label.textContent = 'Copy';
+        }, 2000);
+      };
+    });
   }
-
-  // Run init when DOM is ready
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
-  } else {
-    init();
-  }
-})();
+});

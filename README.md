@@ -1,34 +1,41 @@
 # Listfix
 
-**AI-powered Facebook Marketplace listing optimizer**
+**AI-powered Facebook Marketplace listing optimizer.**
 
-Listfix takes your rough Facebook Marketplace listing draft and uses MiMo AI to generate an optimized title, description, and pricing suggestion. Paste in what you have, get back a listing that sells.
+Paste your listing → get an optimized title, description, price, and photo tips → sell faster.
 
-## Screenshot
+## What it does
 
-![Listfix UI](screenshot.png)
+1. You paste your Marketplace listing (title, description, price)
+2. AI analyzes it against best practices
+3. Returns: optimized title, improved description, suggested price, photo order, keywords, and tips
+4. One-click copy the optimized text back to Marketplace
 
 ## Quick Start
 
 ```bash
-# Set your API key
-export MIMO_API_KEY=your-api-key-here
-export MIMO_BASE_URL=https://api.mimo.ai/v1
-
-# Build and run
+# Build
 go build -o listfix .
+
+# Run (demo mode — no API key needed)
+./listfix
+
+# Run with MiMo AI
+export MIMO_API_KEY=your-key
 ./listfix
 ```
 
-Open http://localhost:8080 in your browser.
+Open http://localhost:8080
 
 ## Environment Variables
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `MIMO_API_KEY` | Yes | — | API key for MiMo AI |
-| `MIMO_BASE_URL` | No | `https://api.mimo.ai/v1` | MiMo API base URL |
+| `MIMO_API_KEY` | No | — | API key for MiMo AI (bring your own key). If not set, runs in demo mode with realistic mock data. |
+| `MIMO_BASE_URL` | No | `https://api.mimo.com/v1` | MiMo API base URL (OpenAI-compatible) |
 | `PORT` | No | `8080` | HTTP server port |
+
+**Bring Your Own Key (BYOK):** This tool does not include an API key. You bring your own MiMo or OpenAI-compatible API key. This keeps the project free, open source, and avoids any usage limits imposed by a shared key.
 
 ## API
 
@@ -37,32 +44,54 @@ Open http://localhost:8080 in your browser.
 Optimize a marketplace listing.
 
 **Request:**
-
 ```json
 {
-  "title": "old couch",
-  "description": "brown couch, some stains, works fine",
-  "category": "furniture",
-  "price": "100"
+  "listing_text": "Selling my iPhone 14 Pro, used for 6 months, works perfectly, comes with case and charger. Asking $750 OBO."
 }
 ```
 
 **Response:**
-
 ```json
 {
-  "optimized_title": "Comfortable 3-Seat Brown Fabric Sofa - Great Condition",
-  "optimized_description": "Well-maintained brown fabric sofa seating three...",
-  "suggested_price": "$120",
-  "tips": ["Add measurements", "Include brand name"]
+  "score": 42,
+  "title": {
+    "current": "Selling my iPhone 14 Pro...",
+    "score": 35,
+    "optimized": "iPhone 14 Pro - Excellent Condition - Local Pickup",
+    "keywords_added": ["condition", "brand", "dimensions"]
+  },
+  "description": {
+    "current": "...",
+    "score": 30,
+    "optimized": "...with added dimensions, condition details, and call-to-action",
+    "improvements": ["Added specific dimensions", "Included brand name", "Added condition details"]
+  },
+  "pricing": {
+    "current": 750,
+    "suggested": 675,
+    "analysis": "Your price is slightly above market average.",
+    "comparable_range": "$525-$825"
+  },
+  "photos": {
+    "current_lead": 1,
+    "suggested_lead": 3,
+    "reason": "Photo #3 shows the full item with good lighting"
+  },
+  "keywords": ["like new", "barely used", "must go", "obo", "local pickup"],
+  "tips": [
+    "Move your best-lit photo to the first position",
+    "Add exact dimensions (L x W x H)",
+    "Include the brand name in the title"
+  ]
 }
 ```
 
 ## Tech Stack
 
 - **Backend:** Go (net/http)
-- **AI:** MiMo via OpenAI-compatible API
-- **Frontend:** HTML, Tailwind CSS, vanilla JS
+- **AI:** MiMo v2.5 Pro via OpenAI-compatible API
+- **Frontend:** HTML, Tailwind CSS (CDN), vanilla JavaScript
+- **Deploy:** Docker, GitHub Actions
 
 ## License
 
@@ -70,4 +99,4 @@ MIT
 
 ---
 
-Built as part of the Daemons ecosystem.
+Built as part of the [Daemons](https://github.com/Heman10x-NGU/daemons) ecosystem.
